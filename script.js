@@ -1,4 +1,4 @@
-﻿// Золотые зубы.exe — предсказатель.
+// Золотые зубы.exe — предсказатель.
 // Чтобы добавить цитаты, дописывайте строки в файл quotes.txt
 // (UTF-8, одна цитата на строку; пустые строки пропускаются).
 //
@@ -118,7 +118,7 @@
 
   // Управляющие символы и символы смены направления текста убираем —
   // содержимое файла считаем недоверенным.
-  var UNSAFE_CHARS = /[\u0000-\u0008\u000B-\u001F\u007F‎‏‪-‮⁦-⁩]/g;
+  var UNSAFE_CHARS = /[\u0000-\u0008\u000B-\u001F\u007F\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
 
   var quotesPromise = fetch('quotes.txt', { cache: 'no-cache', credentials: 'same-origin' })
     .then(function (response) {
@@ -127,7 +127,7 @@
     })
     .then(function (text) {
       var list = text
-        .replace(/^﻿/, '')       // BOM в начале файла
+        .replace(/^\uFEFF/, '')       // BOM в начале файла
         .split(/\r?\n/)
         .map(function (line) { return line.replace(UNSAFE_CHARS, '').trim(); })
         .filter(function (line) { return line.length > 0; });
@@ -367,7 +367,31 @@
     return { size: minSize, lines: lines };
   }
 
-  function renderPrediction(prediction) {
+  // Фото с сайта (тот же photo.jpg). Ждём загрузки; если файла нет — картинка рисуется без фото.
+  function loadPhoto() {
+    if (!img || photo.classList.contains('photo--missing')) return Promise.resolve(null);
+    if (img.complete) return Promise.resolve(img.naturalWidth > 0 ? img : null);
+    return new Promise(function (resolve) {
+      var finish = function () { resolve(img.complete && img.naturalWidth > 0 ? img : null); };
+      img.addEventListener('load', finish, { once: true });
+      img.addEventListener('error', finish, { once: true });
+      setTimeout(finish, 5000);
+    });
+  }
+
+  // Рисует фото «обложкой» (как object-fit: cover; object-position: center 30% в style.css)
+  function drawCover(ctx, image, x, y, w, h) {
+    var iw = image.naturalWidth;
+    var ih = image.naturalHeight;
+    var scale = Math.max(w / iw, h / ih);
+    var sw = w / scale;
+    var sh = h / scale;
+    var sx = (iw - sw) / 2;
+    var sy = (ih - sh) * 0.3;
+    ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
+  }
+
+  function renderPrediction(prediction, photoImg) {
     var W = 1080;
     var H = 1350;
     var canvas = document.createElement('canvas');
@@ -425,10 +449,20 @@
       ctx.fillText(sym, bx + 18, winY + 36);
     });
 
+    // Фото под заголовком окна — на всю ширину окна
+    var photoH = 0;
+    if (photoImg) {
+      photoH = 440;
+      drawCover(ctx, photoImg, winX + 4, winY + barH, winW - 8, photoH);
+      ctx.fillStyle = INK;
+      ctx.fillRect(winX, winY + barH + photoH, winW, 4);
+      photoH += 4;
+    }
+
     var padX = 64;
     var x = winX + padX;
     var maxW = winW - padX * 2;
-    var y = winY + barH + 64;
+    var y = winY + barH + photoH + (photoImg ? 56 : 64);
 
     // Метка
     ctx.textAlign = 'left';
@@ -437,13 +471,14 @@
     ctx.fillText('ПРЕДСКАЗАНИЕ ОТ ЗОЛОТЫХ ЗУБОВ', x, y);
     y += 56;
 
-    // Вопрос (мелко, максимум 4 строки)
+    // Вопрос (мелко: с фото до 2 строк, без фото до 4)
     ctx.fillStyle = MUTED;
     setFont(ctx, 28, false);
     var qLines = wrapText(ctx, 'Вопрос: ' + prediction.question, maxW, true).lines;
-    if (qLines.length > 4) {
-      qLines = qLines.slice(0, 4);
-      qLines[3] = ellipsize(ctx, qLines[3], maxW);
+    var qMax = photoImg ? 2 : 4;
+    if (qLines.length > qMax) {
+      qLines = qLines.slice(0, qMax);
+      qLines[qMax - 1] = ellipsize(ctx, qLines[qMax - 1], maxW);
     }
     qLines.forEach(function (line) {
       ctx.fillText(line, x, y);
@@ -467,7 +502,7 @@
     var areaTop = y;
     var areaBottom = signY - 90;
     var LH = 1.3;
-    var fit = fitText(ctx, prediction.quote, maxW, areaBottom - areaTop, 92, 30, LH);
+    var fit = fitText(ctx, prediction.quote, maxW, areaBottom - areaTop, photoImg ? 80 : 92, 26, LH);
     var lineStep = fit.size * LH;
     var blockH = fit.lines.length * lineStep;
     var startY = areaTop + Math.max(0, (areaBottom - areaTop - blockH) / 2);
@@ -528,7 +563,13 @@
 
     downloadBtn.disabled = true;
     fontsReady()
-      .then(function () { return canvasToBlob(renderPrediction(prediction)); })
+      .then(loadPhoto)
+      .then(function (photoImg) {
+        // Если с фото что-то не так (например, canvas «испорчен»), делаем картинку без фото
+        return canvasToBlob(renderPrediction(prediction, photoImg)).catch(function () {
+          return canvasToBlob(renderPrediction(prediction, null));
+        });
+      })
       .then(function (blob) {
         saveBlob(blob, tab);
         statusEl.textContent = 'Картинка готова';
