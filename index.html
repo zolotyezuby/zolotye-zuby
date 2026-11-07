@@ -1,0 +1,86 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; media-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Задай любой вопрос и получи предсказание от Золотых зубов. Учебный фан-проект.">
+  <meta name="color-scheme" content="light">
+  <title>Золотые зубы.exe — предсказатель</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body class="is-locked">
+
+  <!-- Экран входа: нужен, чтобы браузер разрешил включить музыку после клика -->
+  <button type="button" id="enter" class="enter">
+    <span class="enter__title">Золотые зубы.exe</span>
+    <span class="enter__text">Нажми, чтобы войти<span class="enter__cursor" aria-hidden="true">_</span></span>
+  </button>
+
+  <noscript><p class="noscript">Для работы предсказателя включите JavaScript.</p></noscript>
+
+  <!-- Кнопка звука: всегда в правом верхнем углу -->
+  <button type="button" id="sound" class="sound" aria-label="Выключить музыку">🔊</button>
+  <audio id="music" src="music.mp3" loop preload="metadata"></audio>
+
+  <div class="page">
+    <main class="window">
+      <header class="titlebar">
+        <span class="titlebar__icon" aria-hidden="true">✦</span>
+        <h1 class="titlebar__title">Золотые зубы.exe — предсказатель</h1>
+        <span class="titlebar__btns" aria-hidden="true"><span>_</span><span>□</span><span>×</span></span>
+      </header>
+
+      <div class="window__body">
+        <p class="rail">
+          <span class="rail__star" aria-hidden="true">✦</span>
+          <span class="rail__word">ПРЕДСКАЗАТЕЛЬ</span>
+          <span class="rail__year">2026</span>
+        </p>
+
+        <div class="panel">
+          <p class="subtitle">Предсказание от Золотых зубов <span class="subtitle__dot" aria-hidden="true">•</span> Задай любой вопрос</p>
+
+          <form id="ask-form" class="ask" autocomplete="off" novalidate>
+            <label for="question" class="label">Задай любой вопрос</label>
+            <input id="question" class="input" name="question" type="text" maxlength="200" autocomplete="off" autocapitalize="sentences" spellcheck="false" placeholder="Например: что меня ждёт?" aria-describedby="hint">
+            <p id="hint" class="hint" aria-live="polite"></p>
+            <button type="submit" id="ask" class="btn btn--primary">Спроси Золотые зубы</button>
+          </form>
+
+          <section class="result" aria-labelledby="result-title">
+            <h2 id="result-title" class="result__title">Предсказание от Золотых зубов</h2>
+            <div class="result__box" aria-live="polite">
+              <p id="result-question" class="result__question" hidden></p>
+              <p id="result-text" class="result__text is-placeholder">Здесь появится цитата Золотых зубов</p>
+              <p id="result-sign" class="result__sign" hidden>— Золотые зубы</p>
+            </div>
+            <div class="actions">
+              <button type="button" id="download" class="btn btn--ghost" disabled><span aria-hidden="true">⤓</span> Скачать картинку предсказания</button>
+              <button type="button" id="reask" class="btn">Переспросить</button>
+            </div>
+          </section>
+        </div>
+
+        <figure id="photo" class="photo">
+          <img src="photo.jpg" alt="Золотые зубы" decoding="async">
+        </figure>
+      </div>
+
+      <div class="statusbar">
+        <span id="status">Готов к вопросам</span>
+        <span>v2026</span>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>Учебный проект. Идея взята с <a href="https://dkdanceblog.github.io/mujuice_future/" target="_blank" rel="noopener noreferrer">https://dkdanceblog.github.io/mujuice_future/</a></p>
+      <p>Неофициальный фан-проект, не связан с группой «Золотые зубы». Почта для связи: <a href="mailto:zolotyezuby@atomicmail.io">zolotyezuby@atomicmail.io</a></p>
+      <p>Сайт не собирает и не передаёт данные: вопросы остаются в вашем браузере.</p>
+    </footer>
+  </div>
+</body>
+</html>
